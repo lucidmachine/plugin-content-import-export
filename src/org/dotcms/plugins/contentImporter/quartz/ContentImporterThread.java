@@ -32,10 +32,12 @@ import com.dotmarketing.cms.factories.PublicCompanyFactory;
 import com.dotmarketing.exception.DotDataException;
 import com.dotmarketing.exception.DotSecurityException;
 import com.dotmarketing.plugin.business.PluginAPI;
+import com.dotmarketing.portlets.contentlet.action.ImportContentletsAction;
 import com.dotmarketing.portlets.contentlet.model.Contentlet;
 import com.dotmarketing.portlets.fileassets.business.FileAsset;
 import com.dotmarketing.portlets.fileassets.business.FileAssetAPI;
 import com.dotmarketing.portlets.folders.model.Folder;
+import com.dotmarketing.util.ImportUtil;
 import com.dotmarketing.util.Logger;
 import com.dotmarketing.util.Mailer;
 import com.dotmarketing.util.UtilMethods;
@@ -363,6 +365,7 @@ public class ContentImporterThread implements Job {
 
 			if (csvreader.readHeaders()) 
 			{
+
 				ContentletUtil contentletUtil = new ContentletUtil(reader, csvreader);
 				if(deleteAllContent){
 					contentletUtil.deleteAllContent(structure, user);

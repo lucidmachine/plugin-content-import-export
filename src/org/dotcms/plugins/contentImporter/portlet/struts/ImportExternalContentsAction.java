@@ -307,7 +307,7 @@ public class ImportExternalContentsAction extends DotPortletAction{
 		List<Field> fields = FieldsCache.getFieldsByStructureInode(importForm.getStructure());
 		for(int i = 0; i < fields.size(); i++) {
 			Field field = fields.get(i);
-			if (ContentletUtil.isImportableField(field)) {
+			if (ImportUtil.isImportableField(field)) {
 				String fieldName = field.getFieldName();
 				if(fieldName.contains(","))
 					out.print("\"" + fieldName + "\"");
@@ -321,7 +321,7 @@ public class ImportExternalContentsAction extends DotPortletAction{
 
 		for(int i = 0; i < fields.size(); i++) {
 			Field field = fields.get(i);
-			if (ContentletUtil.isImportableField(field)) {
+			if (ImportUtil.isImportableField(field)) {
 				if (field.getFieldType().equals(Field.FieldType.DATE.toString())) {
 					out.print("MM/dd/yyyy");
 				}        	
