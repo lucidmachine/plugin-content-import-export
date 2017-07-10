@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.dotcms.contenttype.model.type.ContentType;
+import com.dotcms.contenttype.transform.contenttype.StructureTransformer;
 import com.dotcms.repackage.com.csvreader.CsvReader;
 import com.dotmarketing.beans.Host;
 import com.dotmarketing.beans.Identifier;
@@ -44,13 +46,12 @@ import com.dotmarketing.portlets.contentlet.business.DotContentletStateException
 import com.dotmarketing.portlets.contentlet.business.DotContentletValidationException;
 import com.dotmarketing.portlets.contentlet.business.HostAPI;
 import com.dotmarketing.portlets.contentlet.model.Contentlet;
-import com.dotmarketing.portlets.files.model.File;
+import com.dotmarketing.portlets.fileassets.business.FileAsset;
 import com.dotmarketing.portlets.folders.business.FolderAPI;
 import com.dotmarketing.portlets.folders.model.Folder;
 import com.dotmarketing.portlets.languagesmanager.business.LanguageAPI;
 import com.dotmarketing.portlets.languagesmanager.model.Language;
 import com.dotmarketing.portlets.structure.factories.FieldFactory;
-import com.dotmarketing.portlets.structure.factories.RelationshipFactory;
 import com.dotmarketing.portlets.structure.model.ContentletRelationships;
 import com.dotmarketing.portlets.structure.model.Field;
 import com.dotmarketing.portlets.structure.model.Relationship;
@@ -288,10 +289,10 @@ public class ContentletUtil {
 	private static void importHeaders(String[] headerLine, Structure structure, String[] keyFieldsInodes, boolean preview, boolean isMultilingual, User user, HashMap<String, List<String>> results, HashMap<Integer, Field> headers, HashMap<Integer, Field> keyFields, List<Field> uniqueFields, HashMap<Integer, Relationship> relationships,HashMap<Integer,Boolean> onlyChild, HashMap<Integer,Boolean> onlyParent) throws Exception  {
 
 		int importableFields = 0;
-
+		ContentType type = new StructureTransformer(structure).from();
 		//Importing headers and storing them in a hashmap to be reused later in the whole import process
 		List<Field> fields = FieldsCache.getFieldsByStructureInode(structure.getInode());
-		List<Relationship> structureRelationships = RelationshipFactory.getAllRelationshipsByStructure(structure);
+		List<Relationship> structureRelationships = APILocator.getRelationshipAPI().byContentType(type);
 		List<String> requiredFields = new ArrayList<String>();
 		List<String> headerFields = new ArrayList<String>();
 
@@ -655,41 +656,20 @@ public class ContentletUtil {
 						}
 
 						//Find the file in dotCMS
-						File dotCMSFile = null;
+						FileAsset dotCMSFile = null;
 
 						Identifier id = APILocator.getIdentifierAPI().find(fileHost, filePath);
-						if(id!=null && InodeUtils.isSet(id.getId()) && id.getAssetType().equals("contentlet")){
-							Contentlet cont = APILocator.getContentletAPI().findContentletByIdentifier(id.getId(), true, APILocator.getLanguageAPI().getDefaultLanguage().getId(), user, false);
-							if(cont!=null && InodeUtils.isSet(cont.getInode())){
-								valueObj = cont.getIdentifier();
-							}else{
-								String localLineMessage = LanguageUtil.get(user, "Line--");
-								String noFileMessage = LanguageUtil.get(user, "The-file-has-not-been-found");
-								results.get("warnings").add(localLineMessage + lineNumber + ". " + noFileMessage + ": " + fileHost.getHostname() + ":" + filePath);
-								valueObj = null;
-							}
-						}else{
-							try
-							{
-								dotCMSFile = APILocator.getFileAPI().getFileByURI(filePath, fileHost, true, user, false);
 
-							}catch(Exception ex)
-							{
-								//File doesn't exist below I check this
-							}
-							if(UtilMethods.isSet(dotCMSFile) && UtilMethods.isSet(dotCMSFile.getIdentifier()))
-							{
-								valueObj = dotCMSFile.getIdentifier();
-							}
-							else
-							{
-								//Add Warning the File doesn't exist
-								String localLineMessage = LanguageUtil.get(user, "Line--");
-								String noFileMessage = LanguageUtil.get(user, "The-file-has-not-been-found");
-								results.get("warnings").add(localLineMessage + lineNumber + ". " + noFileMessage + ": " + fileHost.getHostname() + ":" + filePath);
-								valueObj = null;
-							}
-						}	}
+						Contentlet cont = APILocator.getContentletAPI().findContentletByIdentifier(id.getId(), true, APILocator.getLanguageAPI().getDefaultLanguage().getId(), user, false);
+						if(cont!=null && InodeUtils.isSet(cont.getInode())){
+							valueObj = cont.getIdentifier();
+						}else{
+							String localLineMessage = LanguageUtil.get(user, "Line--");
+							String noFileMessage = LanguageUtil.get(user, "The-file-has-not-been-found");
+							results.get("warnings").add(localLineMessage + lineNumber + ". " + noFileMessage + ": " + fileHost.getHostname() + ":" + filePath);
+							valueObj = null;
+						}
+					}
 				}
 				else {
 					valueObj = UtilMethods.escapeUnicodeCharsForHTML(value);
@@ -704,7 +684,11 @@ public class ContentletUtil {
 					uniqueFieldBeans.add(bean);
 				}
 			}
+	        ContentType type = new StructureTransformer(structure).from();
 
+
+	        
+	        
 			HashMap<Relationship,List<Contentlet>> csvRelationshipRecordsParentOnly = new HashMap<Relationship,List<Contentlet>>();
 			HashMap<Relationship,List<Contentlet>> csvRelationshipRecordsChildOnly = new HashMap<Relationship,List<Contentlet>>();
 			HashMap<Relationship,List<Contentlet>> csvRelationshipRecords = new HashMap<Relationship,List<Contentlet>>();
@@ -718,24 +702,24 @@ public class ContentletUtil {
 					relatedContentlets = conAPI.checkoutWithQuery(relatedQuery, user, false);
 
 					//validate if the contenlet retrieved are from the correct typ
-					if(RelationshipFactory.isParentOfTheRelationship(relationship,structure))
+					if(APILocator.getRelationshipAPI().isParent(relationship,structure))
 					{
 						for(Contentlet contentlet : relatedContentlets)
 						{
 							Structure relatedStructure = contentlet.getStructure();
-							if(!(RelationshipFactory.isChildOfTheRelationship(relationship,relatedStructure)))
+							if(!(APILocator.getRelationshipAPI().isChild(relationship,relatedStructure)))
 							{
 								error = true;
 								break;
 							}
 						}
 					}
-					if(RelationshipFactory.isChildOfTheRelationship(relationship,structure))
+					if(APILocator.getRelationshipAPI().isChild(relationship,structure))
 					{
 						for(Contentlet contentlet : relatedContentlets)
 						{
 							Structure relatedStructure = contentlet.getStructure();
-							if(!(RelationshipFactory.isParentOfTheRelationship(relationship,relatedStructure)))
+							if(!(APILocator.getRelationshipAPI().isParent(relationship,relatedStructure)))
 							{
 								error = true;
 								break;

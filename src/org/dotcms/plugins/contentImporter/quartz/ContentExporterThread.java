@@ -41,6 +41,7 @@ import com.dotmarketing.portlets.fileassets.business.FileAsset;
 import com.dotmarketing.portlets.fileassets.business.FileAssetAPI;
 import com.dotmarketing.portlets.folders.model.Folder;
 import com.dotmarketing.portlets.languagesmanager.model.Language;
+import com.dotmarketing.portlets.structure.factories.StructureFactory;
 import com.dotmarketing.portlets.structure.model.Field;
 import com.dotmarketing.portlets.structure.model.Structure;
 import com.dotmarketing.util.InodeUtils;
@@ -150,7 +151,7 @@ public class ContentExporterThread implements Job {
 		try {
 			User systemUser = APILocator.getUserAPI().getSystemUser();
 			Host host = APILocator.getHostAPI().findByName(fileAssetHost, systemUser, false);
-			Structure fileAssetStructure = CacheLocator.getContentTypeCache().getStructureByName(fileAsset);
+			Structure fileAssetStructure = StructureFactory.getStructureByVelocityVarName(fileAsset);
 
 			// Get or create folder
 			Folder folder = APILocator.getFolderAPI().findFolderByPath(fileAssetPath, host, systemUser, false);
