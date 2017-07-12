@@ -173,10 +173,8 @@ public class ContentImporterThread implements Job {
 
                     try {
 
-                        
-            
-                        
-                        
+
+
                         HashMap<String, List<String>> currentResults = importInputStream(
                                         fileAssetCont.getFileInputStream(), csvTextDelimiter,
                                         csvSeparatorDelimiter, structure, keyFields,
@@ -367,7 +365,7 @@ public class ContentImporterThread implements Job {
         CsvReader csvreader = null;
         User user = APILocator.systemUser();
         Host defaultHost = APILocator.getHostAPI().findDefaultHost(user, false);
-        
+
         try {
             reader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
             csvreader = new CsvReader(reader);
@@ -385,7 +383,6 @@ public class ContentImporterThread implements Job {
 
 
 
-
             if (csvreader.readHeaders()) {
                 csvHeaders = csvreader.getHeaders();
                 for (int column = 0; column < csvHeaders.length; ++column) {
@@ -398,25 +395,42 @@ public class ContentImporterThread implements Job {
                         break;
                 }
             }
-            
 
-            Logger.info(this.getClass(), "headers:"  +  csvHeaders);
-            Logger.info(this.getClass(), "keyFields:"  +  keyFields);
-            Logger.info(this.getClass(), "isMultilingual:"  +  isMultilingual);
-            Logger.info(this.getClass(), "countryCodeHeaderColumn:"  +  countryCodeHeaderColumn);
-            Logger.info(this.getClass(), "language:"  +  language);
-            
-            
+
+            Logger.info(this.getClass(), "headers:" + csvHeaders);
+            Logger.info(this.getClass(), "keyFields:" + keyFields);
+            Logger.info(this.getClass(), "isMultilingual:" + isMultilingual);
+            Logger.info(this.getClass(), "countryCodeHeaderColumn:" + countryCodeHeaderColumn);
+            Logger.info(this.getClass(), "language:" + language);
+
+
             ContentletUtil contentletUtil = new ContentletUtil(reader, csvreader);
             if (deleteAllContent) {
                 contentletUtil.deleteAllContent(structure, user);
             }
             boolean preview = false;
 
-            return ImportUtil.importFile(System.currentTimeMillis(),
-                            defaultHost.getIdentifier(), structure, keyFields, preview,
-                            isMultilingual, user, language, csvHeaders, csvreader,
-                            languageCodeHeaderColumn, countryCodeHeaderColumn, reader);
+            HashMap<String, List<String>> results = ImportUtil.importFile(
+                            System.currentTimeMillis(), defaultHost.getIdentifier(), structure,
+                            keyFields, preview, isMultilingual, user, language, csvHeaders,
+                            csvreader, languageCodeHeaderColumn, countryCodeHeaderColumn, reader);
+
+
+            List<String> ids = results.get("identifiers");
+            if (publishContent) {
+                for (String id : ids) {
+                    try {
+                        Contentlet contentlet =
+                                        APILocator.getContentletAPI().findContentletByIdentifier(id,
+                                                        false, language, user, false);
+                        APILocator.getContentletAPI().publish(contentlet, user, false);
+                    } catch (Exception e) {
+                        Logger.warn(this.getClass(), e.getMessage(), e);
+                    }
+
+                }
+            }
+            return results;
 
 
 
