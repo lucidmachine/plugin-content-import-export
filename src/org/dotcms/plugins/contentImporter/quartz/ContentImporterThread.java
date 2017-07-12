@@ -356,13 +356,14 @@ public class ContentImporterThread implements Job {
 
     private HashMap<String, List<String>> importInputStream(InputStream inputStream,
                     String csvTextDelimiter, String csvSeparatorDelimiter, String structure,
-                    String[] keyFields, long language, boolean isMultilingual, boolean publishContent,
-                    boolean deleteAllContent, boolean saveWithoutVersions)
+                    String[] keyFields, long language, boolean isMultilingual,
+                    boolean publishContent, boolean deleteAllContent, boolean saveWithoutVersions)
                     throws IOException, DotDataException, DotSecurityException {
-        Reader reader=null;
-        CsvReader csvreader=null;
-        Host defaultHost = WebAPILocator.getHostWebAPI().findDefaultHost(APILocator.systemUser(),
-                        false);
+        Reader reader = null;
+        CsvReader csvreader = null;
+        User user = APILocator.systemUser();
+        Host defaultHost = APILocator.getHostAPI().findDefaultHost(user, false);
+        
         try {
             reader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
             csvreader = new CsvReader(reader);
@@ -394,8 +395,8 @@ public class ContentImporterThread implements Job {
                     }
                 }
             }
-            User user = APILocator.getUserAPI().getSystemUser();
 
+            
             if (csvreader.readHeaders()) {
                 ContentletUtil contentletUtil = new ContentletUtil(reader, csvreader);
                 if (deleteAllContent) {
