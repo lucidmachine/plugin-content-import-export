@@ -41,6 +41,7 @@ import com.dotmarketing.util.ImportUtil;
 import com.dotmarketing.util.Logger;
 import com.dotmarketing.util.Mailer;
 import com.dotmarketing.util.UtilMethods;
+import com.google.common.collect.ImmutableList;
 import com.liferay.portal.model.Company;
 import com.liferay.portal.model.User;
 
@@ -417,13 +418,20 @@ public class ContentImporterThread implements Job {
 
 
             List<String> ids = results.get("identifiers");
+            
+            ids = (ids==null ) ? ImmutableList.of() : ids;
+            Logger.info(this.getClass(), "found:" + ids.size() + " contentlets to publish" );
+            
             if (publishContent) {
                 for (String id : ids) {
                     try {
                         Contentlet contentlet =
                                         APILocator.getContentletAPI().findContentletByIdentifier(id,
-                                                        false, language, user, false);
+                                                        false, -1, user, false);
                         APILocator.getContentletAPI().publish(contentlet, user, false);
+                        
+                        Logger.info(this.getClass(), "published id :" + id );
+                        
                     } catch (Exception e) {
                         Logger.warn(this.getClass(), e.getMessage(), e);
                     }
