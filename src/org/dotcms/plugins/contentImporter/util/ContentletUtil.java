@@ -60,6 +60,9 @@ public class ContentletUtil {
                     boolean publishContent, boolean saveWithoutVersions)
                     throws DotRuntimeException, DotDataException {
 
+        
+        
+        
 
         return ImportUtil.importFile(System.currentTimeMillis(), defaultHost.getIdentifier(),
                         structure, keyfields, preview, isMultilingual, user, language, keyfields,

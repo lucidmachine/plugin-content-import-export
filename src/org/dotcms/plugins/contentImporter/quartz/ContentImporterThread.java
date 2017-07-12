@@ -1,7 +1,6 @@
 package org.dotcms.plugins.contentImporter.quartz;
 
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -35,7 +34,6 @@ import com.dotmarketing.exception.DotDataException;
 import com.dotmarketing.exception.DotSecurityException;
 import com.dotmarketing.plugin.business.PluginAPI;
 import com.dotmarketing.portlets.contentlet.model.Contentlet;
-import com.dotmarketing.portlets.contentlet.struts.ImportContentletsForm;
 import com.dotmarketing.portlets.fileassets.business.FileAsset;
 import com.dotmarketing.portlets.fileassets.business.FileAssetAPI;
 import com.dotmarketing.portlets.folders.model.Folder;
@@ -88,7 +86,7 @@ public class ContentImporterThread implements Job {
         try {
             String structure = (String) properties.get("structure");
 
-            String[] fields = {};
+            String[] keyFields = {};
             if (UtilMethods.isSet(properties.get("fields"))) {
                 String[] strFields = ((String) properties.get("fields")).split(",");
                 List<String> longFields = new ArrayList<String>(strFields.length);
@@ -100,7 +98,7 @@ public class ContentImporterThread implements Job {
                 for (int pos = 0; pos < longFields.size(); ++pos) {
                     tempArray[pos] = longFields.get(pos);
                 }
-                fields = tempArray;
+                keyFields = tempArray;
             }
 
 
@@ -124,22 +122,22 @@ public class ContentImporterThread implements Job {
 
             if (haveFileSource) {
                 importFromContent(fileAsset, fileAssetQuery, logPath, reportEmail, structure,
-                                fields, language, isMultilanguage, csvSeparatorDelimiter,
+                                keyFields, language, isMultilanguage, csvSeparatorDelimiter,
                                 csvTextDelimiter, publishContent, deleteAllContent,
                                 saveWithoutVersions);
             } else {
-                importFromFileSystem(filePath, logPath, reportEmail, structure, fields, language,
+                importFromFileSystem(filePath, logPath, reportEmail, structure, keyFields, language,
                                 isMultilanguage, csvSeparatorDelimiter, csvTextDelimiter,
                                 publishContent, deleteAllContent, saveWithoutVersions);
             }
 
         } catch (Exception e1) {
-            Logger.warn(this, e1.toString());
+            Logger.warn(this, e1.toString(), e1);
         }
     }
 
     private void importFromContent(String fileAsset, String fileAssetQuery, String logPath,
-                    String reportEmail, String structure, String[] fields, long language,
+                    String reportEmail, String structure, String[] keyFields, long language,
                     boolean isMultilanguage, String csvSeparatorDelimiter, String csvTextDelimiter,
                     boolean publishContent, boolean deleteAllContent, boolean saveWithoutVersions) {
         HashMap<String, List<String>> results = createResults();
@@ -177,7 +175,7 @@ public class ContentImporterThread implements Job {
 
                         HashMap<String, List<String>> currentResults = importInputStream(
                                         fileAssetCont.getFileInputStream(), csvTextDelimiter,
-                                        csvSeparatorDelimiter, structure, fields,
+                                        csvSeparatorDelimiter, structure, keyFields,
                                         fileAssetCont.getLanguageId(), isMultilanguage,
                                         publishContent, deleteAllContent, saveWithoutVersions);
 
@@ -358,7 +356,7 @@ public class ContentImporterThread implements Job {
 
     private HashMap<String, List<String>> importInputStream(InputStream inputStream,
                     String csvTextDelimiter, String csvSeparatorDelimiter, String structure,
-                    String[] fields, long language, boolean isMultilingual, boolean publishContent,
+                    String[] keyFields, long language, boolean isMultilingual, boolean publishContent,
                     boolean deleteAllContent, boolean saveWithoutVersions)
                     throws IOException, DotDataException, DotSecurityException {
         Reader reader=null;
@@ -367,7 +365,8 @@ public class ContentImporterThread implements Job {
                         false);
         try {
             reader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
-            csvreader = new CsvReader(reader, csvSeparatorDelimiter.charAt(0));
+            csvreader = new CsvReader(reader);
+
 
             if (UtilMethods.isSet(csvTextDelimiter)) {
                 csvreader.setTextQualifier(csvTextDelimiter.charAt(0));
@@ -405,7 +404,7 @@ public class ContentImporterThread implements Job {
                 boolean preview = false;
 
                 return ImportUtil.importFile(System.currentTimeMillis(),
-                                defaultHost.getIdentifier(), structure, fields, preview,
+                                defaultHost.getIdentifier(), structure, keyFields, preview,
                                 isMultilingual, user, language, csvHeaders, csvreader,
                                 languageCodeHeaderColumn, countryCodeHeaderColumn, reader);
 
