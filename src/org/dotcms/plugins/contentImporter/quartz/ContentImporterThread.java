@@ -420,7 +420,6 @@ public class ContentImporterThread implements Job {
 
 
 
-            return null;
         } finally {
             if (reader != null) {
                 try {
