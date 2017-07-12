@@ -173,6 +173,10 @@ public class ContentImporterThread implements Job {
 
                     try {
 
+                        
+            
+                        
+                        
                         HashMap<String, List<String>> currentResults = importInputStream(
                                         fileAssetCont.getFileInputStream(), csvTextDelimiter,
                                         csvSeparatorDelimiter, structure, keyFields,
@@ -381,36 +385,41 @@ public class ContentImporterThread implements Job {
 
 
 
-            if (language == -1) {
-                if (csvreader.readHeaders()) {
-                    csvHeaders = csvreader.getHeaders();
-                    for (int column = 0; column < csvHeaders.length; ++column) {
-                        if (csvHeaders[column].equals(languageCodeHeader))
-                            languageCodeHeaderColumn = column;
-                        if (csvHeaders[column].equals(countryCodeHeader))
-                            countryCodeHeaderColumn = column;
 
-                        if ((-1 < languageCodeHeaderColumn) && (-1 < countryCodeHeaderColumn))
-                            break;
-                    }
-                }
-            }
-
-            
             if (csvreader.readHeaders()) {
-                ContentletUtil contentletUtil = new ContentletUtil(reader, csvreader);
-                if (deleteAllContent) {
-                    contentletUtil.deleteAllContent(structure, user);
+                csvHeaders = csvreader.getHeaders();
+                for (int column = 0; column < csvHeaders.length; ++column) {
+                    if (csvHeaders[column].equals(languageCodeHeader))
+                        languageCodeHeaderColumn = column;
+                    if (csvHeaders[column].equals(countryCodeHeader))
+                        countryCodeHeaderColumn = column;
+
+                    if ((-1 < languageCodeHeaderColumn) && (-1 < countryCodeHeaderColumn))
+                        break;
                 }
-                boolean preview = false;
-
-                return ImportUtil.importFile(System.currentTimeMillis(),
-                                defaultHost.getIdentifier(), structure, keyFields, preview,
-                                isMultilingual, user, language, csvHeaders, csvreader,
-                                languageCodeHeaderColumn, countryCodeHeaderColumn, reader);
-
-
             }
+            
+
+            Logger.info(this.getClass(), "headers:"  +  csvHeaders);
+            Logger.info(this.getClass(), "keyFields:"  +  keyFields);
+            Logger.info(this.getClass(), "isMultilingual:"  +  isMultilingual);
+            Logger.info(this.getClass(), "countryCodeHeaderColumn:"  +  countryCodeHeaderColumn);
+            Logger.info(this.getClass(), "language:"  +  language);
+            
+            
+            ContentletUtil contentletUtil = new ContentletUtil(reader, csvreader);
+            if (deleteAllContent) {
+                contentletUtil.deleteAllContent(structure, user);
+            }
+            boolean preview = false;
+
+            return ImportUtil.importFile(System.currentTimeMillis(),
+                            defaultHost.getIdentifier(), structure, keyFields, preview,
+                            isMultilingual, user, language, csvHeaders, csvreader,
+                            languageCodeHeaderColumn, countryCodeHeaderColumn, reader);
+
+
+
             return null;
         } finally {
             if (reader != null) {
